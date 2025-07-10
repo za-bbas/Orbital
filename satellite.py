@@ -26,4 +26,4 @@ def dStateDT(t, state):
     F = Fgrav
     accel = F/m
 
-    return np.array([vel, accel])
+    return np.concatenate((vel, accel))
