@@ -1,5 +1,5 @@
 from planet import *
-from satellite import *
+from satellite import Satellite
 from math import sqrt, pi, sin, cos
 import numpy as np
 import numpy.linalg as la
@@ -7,10 +7,18 @@ from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D  # required for 3D projection
 from matplotlib import cm
+from datetime import datetime
+import ppigrf
 
 
 # Simulation of a low earth satellite
 print('Simulation started.')
+
+sat = Satellite()
+
+# Setup IGRF model
+
+
 
 # Initial conditions
 altitude = 400e3                                # meters
@@ -35,7 +43,7 @@ tSpan = [0, period * numberOfOrbits]
 
 # Integrate equations of motion
 solution = solve_ivp(
-    fun=dStateDT,
+    fun=sat.dStateDT,
     t_span=tSpan,
     y0=stateInitial,
     method='RK45',
@@ -45,6 +53,17 @@ solution = solve_ivp(
 
 tout = solution.t
 stateout = solution.y.T
+
+# get magnetic field data
+BxIout = []
+ByIout = []
+BzIout = []
+
+for t, state in zip(tout, stateout):
+    Bxyz = sat.get_B_inertial(t, state)
+    BxIout.append(Bxyz[0])
+    ByIout.append(Bxyz[1])
+    BzIout.append(Bxyz[2])
 
 
 # Convert stateout from meters to kilometers
@@ -82,5 +101,23 @@ ax.set_xlabel('X (km)')
 ax.set_ylabel('Y (km)')
 ax.set_zlabel('Z (km)')
 plt.title("Satellite Orbit Around Earth")
+
+# plotting magentic field throughout orbit
+fig2, ax2 = plt.subplots(figsize=(10, 6))
+fig2.patch.set_facecolor('white')
+
+# Plot components and magnitude
+ax2.plot(tout / 60, BxIout, label='Bx (nT)')
+ax2.plot(tout / 60, ByIout, label='By (nT)')
+ax2.plot(tout / 60, BzIout, label='Bz (nT)')
+# ax2.plot(tout / 60, Bmag, label='|B| (nT)', linestyle='--', linewidth=2)
+
+# Formatting
+ax2.set_title("Magnetic Field Components vs Time")
+ax2.set_xlabel("Time (minutes)")
+ax2.set_ylabel("Magnetic Field (nT)")
+ax2.grid(True)
+ax2.legend()
+
 
 plt.show()
