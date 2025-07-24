@@ -5,10 +5,10 @@ import numpy as np
 import numpy.linalg as la
 from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D  # required for 3D projection
-from matplotlib import cm
-from datetime import datetime
-import ppigrf
+# from mpl_toolkits.mplot3d import Axes3D  # required for 3D projection
+# from matplotlib import cm
+# from datetime import datetime
+# import ppigrf
 
 
 # Simulation of a low earth satellite
@@ -16,13 +16,9 @@ print('Simulation started.')
 
 sat = Satellite()
 
-# Setup IGRF model
-
-
-
 # Initial conditions
-altitude = 400e3                                # meters
-inclination = 51 * pi / 180                     # radians
+altitude = 600e3                                # meters
+inclination = 56 * pi / 180                     # radians
 
 x0 = R + altitude
 y0 = 0
@@ -55,6 +51,7 @@ tout = solution.t
 stateout = solution.y.T
 
 # get magnetic field data
+
 BxIout = []
 ByIout = []
 BzIout = []
@@ -107,9 +104,9 @@ fig2, ax2 = plt.subplots(figsize=(10, 6))
 fig2.patch.set_facecolor('white')
 
 # Plot components and magnitude
-ax2.plot(tout / 60, BxIout, label='Bx (nT)')
-ax2.plot(tout / 60, ByIout, label='By (nT)')
-ax2.plot(tout / 60, BzIout, label='Bz (nT)')
+ax2.plot(tout / 60, BxIout, label='Bx (nT)', color = 'blue')
+ax2.plot(tout / 60, ByIout, label='By (nT)', color = 'green')
+ax2.plot(tout / 60, BzIout, label='Bz (nT)', color = 'red')
 # ax2.plot(tout / 60, Bmag, label='|B| (nT)', linestyle='--', linewidth=2)
 
 # Formatting

@@ -94,6 +94,7 @@ class Satellite:
         rho = la.norm([x, y, z])
         thetaE = np.arccos(z / rho)
         psiE = np.arctan2(y, x)
+        phiE = 0
 
         latitude = 90 - thetaE * 180 / pi
         longitude = psiE * 180 / pi
@@ -102,24 +103,26 @@ class Satellite:
         # Get magnetic field in ENU
         Be, Bn, Bu = ppigrf.igrf(longitude, latitude, altitude, datetime(2000, 1, 1))
 
-        # Convert ENU to ECEF (XYZ)
-        # ENU basis at this lat/lon:
-        # E -> x' = -sin(lon), y' = cos(lon), z' = 0
-        # N -> x' = -sin(lat)*cos(lon), y' = -sin(lat)*sin(lon), z' = cos(lat)
-        # U -> x' = cos(lat)*cos(lon), y' = cos(lat)*sin(lon), z' = sin(lat)
-
-        lat_rad = latitude * pi / 180
-        lon_rad = longitude * pi / 180
 
         # Build transformation matrix from ENU to ECEF (inertial for simplicity)
-        T = np.array([
-            [-np.sin(lon_rad), -np.sin(lat_rad) * np.cos(lon_rad),  np.cos(lat_rad) * np.cos(lon_rad)],
-            [ np.cos(lon_rad), -np.sin(lat_rad) * np.sin(lon_rad),  np.cos(lat_rad) * np.sin(lon_rad)],
-            [0,                 np.cos(lat_rad),                    np.sin(lat_rad)]
+        # i.e. TIB matrix
+        cph = np.cos(phiE)
+        cps = np.cos(psiE)
+        cth = np.cos(thetaE + np.pi)
+        sph = np.sin(phiE)
+        sps = np.sin(psiE)
+        sth = np.sin(thetaE + np.pi)
+
+        # matrix for converting from north east down to inertial coordinates
+        # this is the matrix transformation from the spherical reference frame to the inertial refrence frame
+        TIB = np.array([
+            [cth*cps, sph*sth*cps - cph*sps, cph*sth*cps + sph*sps],
+            [cth*sps, sph*sth*sps + cph*cps, cph*sth*sps - sph*cps],
+            [ -1*sth, sph*cth,                             cph*cth]
         ])
 
-        B_enu = np.array([Be, Bn, Bu])
-        B_xyz = T @ B_enu  # Now in ECEF/inertial
+        B_ned = np.array([Bn, Be, -1 * Bu])
+        B_xyz = TIB @ B_ned  # Now in ECI
         return B_xyz
 
     def getLastBField(self):
