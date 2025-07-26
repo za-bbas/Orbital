@@ -69,14 +69,12 @@ class Satellite:
         # Call the magnetic field model
         # Convert cartesian x,y,x to lat, long, alt
         phiE = 0
-        thetaE = acos(z / rho)              # colatitude (rad)
-        psiE = atan2(y, x)                  # longitude  (rad)
+        thetaE = np.arccos(z / rho)         # colatitude (rad)
+        psiE = np.arctan2(y, x)             # longitude (rad)
         latitude = 90 - thetaE * 180 / pi   # degrees
         longitude = psiE * 180 / pi         # degrees
         altitude = (rho - R)/1000           # kilometers
         Be, Bn, Bu = ppigrf.igrf(longitude, latitude, altitude, datetime(2000, 1, 1)) # East, North, Up (ENU) convention...
-        # Why not just use cartesian :-(
-        # geocentric maybe?
 
         # Br, Btheta, Bphi = ppigrf.igrf_gc(rho/1000, thetaE * 180 / pi, psiE * 180 / pi, datetime(2000,1,1))
         # Br: radial B field
@@ -104,7 +102,7 @@ class Satellite:
         Be, Bn, Bu = ppigrf.igrf(longitude, latitude, altitude, datetime(2000, 1, 1))
 
 
-        # Build transformation matrix from ENU to ECEF (inertial for simplicity)
+        # Build transformation matrix from ENU to ECI (inertial for simplicity)
         # i.e. TIB matrix
         cph = np.cos(phiE)
         cps = np.cos(psiE)
@@ -121,6 +119,7 @@ class Satellite:
             [ -1*sth, sph*cth,                             cph*cth]
         ])
 
+        # The matrix is goes from NED (as opposed to the IGRF model output of ENU) to inertial
         B_ned = np.array([Bn, Be, -1 * Bu])
         B_xyz = TIB @ B_ned  # Now in ECI
         return B_xyz

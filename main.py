@@ -27,7 +27,7 @@ semimajor = la.norm(np.array([x0, y0, z0]))     # semimajor axis of orbit
 vCircular = sqrt(mu/semimajor)                  # tangential velocity
 xdot0 = 0                                       # velocity normal to earth so xdot = 0
 ydot0 = vCircular * cos(inclination)
-zdot0 = - vCircular * sin(inclination)
+zdot0 = vCircular * sin(inclination)
 
 # State vector
 stateInitial = np.array([x0, y0, z0, xdot0, ydot0, zdot0])
