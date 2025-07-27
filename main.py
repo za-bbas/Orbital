@@ -10,13 +10,40 @@ import matplotlib.pyplot as plt
 # from datetime import datetime
 # import ppigrf
 
+# the whole euler angles thing kind makes me blegh but its good enough for now
+def eulerToQuat(angles):
+    phi = angles[0]
+    theta = angles[1]
+    psi = angles[2]
+
+    cph = np.cos(phi / 2)
+    cth = np.cos(theta / 2)
+    cps = np.cos(psi / 2)
+    sph = np.sin(phi / 2)
+    sth = np.sin(theta / 2)
+    sps = np.sin(psi / 2)
+
+    q0 = cph * cth * cps + sph * sth * sps
+    q1 = sph * cth * cps - cph * sth * sps
+    q2 = cph * sth * cps + sph * cth * sps
+    q3 = cph * cth * sps - sph * sth * cps
+    
+    return np.array([q0, q1, q2, q3])
+
+def quatToEuler(quat):
+    q0, q1, q2, q3 = quat
+    phi = np.arctan2(2*(q0*q1 + q2*q3), 1 - 2*(q1**2 + q2**2))
+    theta = np.arcsin(2*(q0*q2 - q1*q3))
+    psi = np.arctan2(2*(q0*q3 + q1*q2), 1 - 2*(q2**2 + q3**2))
+
+    return np.array([phi, theta, psi])
 
 # Simulation of a low earth satellite
 print('Simulation started.')
 
 sat = Satellite()
 
-# Initial conditions
+# Initial conditions (translational)
 altitude = 600e3                                # meters
 inclination = 56 * pi / 180                     # radians
 
@@ -29,8 +56,23 @@ xdot0 = 0                                       # velocity normal to earth so xd
 ydot0 = vCircular * cos(inclination)
 zdot0 = vCircular * sin(inclination)
 
+# Initial conditions (rotational)
+# initial attitude (could use some revamping)
+phi0 = 0
+theta0 = 0
+psi0 = 0
+ptp0 = np.array([phi0, theta0, psi0])
+quat0 = eulerToQuat(ptp0)
+# initial angular velocity
+p0 = 0
+q0 = 0
+r0 = 0
+
 # State vector
-stateInitial = np.array([x0, y0, z0, xdot0, ydot0, zdot0])
+stateInitial = np.array([x0, y0, z0, 
+                         xdot0, ydot0, zdot0, 
+                         quat0[0], quat0[1], quat0[2], quat0[3],
+                         p0, q0, r0])
 
 # time window
 period = 2 * pi * sqrt(semimajor**3 / mu)
@@ -64,12 +106,18 @@ for t, state in zip(tout, stateout):
 
 
 # Convert stateout from meters to kilometers
-stateout_km = stateout / 1000
+stateout_km = stateout[0:6] / 1000
 
 # Extract x, y, z components
 xout = stateout_km[:, 0]
 yout = stateout_km[:, 1]
 zout = stateout_km[:, 2]
+# ISSUE: it isnt converting every state into ptp
+# the stupid function is stupid
+# gotta figure out a solution
+quatout = stateout[:, 6:10]
+ptpout = quatToEuler(quatout)
+pqrout = stateout[:, 10:13]
 
 # Create a sphere to represent the Earth
 u, v = np.linspace(0, 2 * np.pi, 100), np.linspace(0, np.pi, 100)
@@ -116,5 +164,15 @@ ax2.set_ylabel("Magnetic Field (nT)")
 ax2.grid(True)
 ax2.legend()
 
+fig3, ax3 = plt.subplots(figsize=(10,6))
+fig3.patch.set_facecolor('white')
+ax3.plot(tout, ptpout[0], label='phi',color='blue')
+ax3.plot(tout, ptpout[1], label='theta',color='blue')
+ax3.plot(tout, ptpout[2], label='psi',color='blue')
+ax3.set_title("Euler Angles throughout an orbit")
+ax3.set_xlabel("Time")
+ax3.set_ylabel("something to do with angles")
+ax3.grid(True)
+ax3.legend
 
 plt.show()

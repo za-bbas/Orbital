@@ -5,60 +5,38 @@ import numpy.linalg as la
 from datetime import datetime
 import ppigrf
 
-'''
-m = 6       # kg
-
-def dStateDT(t, state):
-    x = state[0]
-    y = state[1]
-    z = state[2]
-    xdot = state[3]
-    ydot = state[4]
-    zdot = state[5]
-
-
-    # Kinematics
-    vel = np.array([xdot, ydot, zdot])
-
-    # gravity model
-    r = np.array([x,y,z])
-    rho = la.norm(r)
-    rhat = r / rho
-    Fgrav = -(G * M * m / rho**2) * rhat
-
-    # Call the magnetic field model
-    # Convert cartesian x,y,x to lat, long, alt
-    phiE = 0
-    thetaE = acos(z / rho)              # colatitude (rad)
-    psiE = atan2(y, x)                  # longitude  (rad)
-    latitude = 90 - thetaE * 180 / pi   # degrees
-    longitude = psiE * 180 / pi         # degrees
-    altitude = (rho - R)/1000           # kilometers
-    Be, Bn, Bu = ppigrf.igrf(longitude, latitude, altitude, datetime(2000, 1, 1)) # East, North, Up (ENU) convention...
-    # Why not just use cartesian :-(
-    # geocentric maybe?
-
-    # Br, Btheta, Bphi = ppigrf.igrf_gc(rho/1000, thetaE * 180 / pi, psiE * 180 / pi, datetime(2000,1,1))
-    # Br: radial B field
-    # Btheta: B field in direction of increasing theta (effectivily south)
-    # Bphi: B field in direction of increasing phi (effectively east)
-    
-    # dynamics
-    F = Fgrav
-    accel = F/m
-
-    return np.concatenate((vel, accel))
-'''
-
 class Satellite:
     def __init__(self, mass = 6):
         self.m = mass
+        # Inertia in kg m^2
+        self.I = np.array([
+            [0.9, 0, 0],
+            [0, 0.9, 0],
+            [0, 0, 0.3]
+        ])
+        self.invI = la.inv(self.I)
         self.lastBField = None  # Store last B-field for access
         self.lastPosition = None
 
     def dStateDT(self, t, state):
-        x, y, z, xdot, ydot, zdot = state
+        x, y, z, xdot, ydot, zdot = state[0:6]
+        # translational kinematics
         vel = np.array([xdot, ydot, zdot])
+
+        # rotational kinematics
+        quat = state[6:10]
+        p = state[10]
+        q = state[11]
+        r = state[12]
+        pqr = np.array([p, q, r])
+        PQRMAT = np.array([
+            [0, -p, -q, -r],
+            [p,  0,  r, -q],
+            [q, -r,  0,  p],
+            [r,  q, -p,  0]
+        ])
+
+        quatdot = 0.5 * PQRMAT @ quat
 
         # gravity model
         r = np.array([x,y,z])
@@ -76,16 +54,23 @@ class Satellite:
         altitude = (rho - R)/1000           # kilometers
         Be, Bn, Bu = ppigrf.igrf(longitude, latitude, altitude, datetime(2000, 1, 1)) # East, North, Up (ENU) convention...
 
-        # Br, Btheta, Bphi = ppigrf.igrf_gc(rho/1000, thetaE * 180 / pi, psiE * 180 / pi, datetime(2000,1,1))
-        # Br: radial B field
-        # Btheta: B field in direction of increasing theta (effectivily south)
-        # Bphi: B field in direction of increasing phi (effectively east)
         self.lastBField = np.array([Be, Bn, Bu])
         self.lastPosition = r
 
-        # Dynamics
+        # Translatioal Dynamics
         accel = Fgrav / self.m
-        return np.concatenate((vel, accel))
+
+        # Magtorquer model
+
+        # TODO: finish later
+        LMN_magtorquers = np.array([0,0,0])
+
+
+        # rotational dynamics
+        H = self.I @ pqr
+        pqrdot = self.invI @ (LMN_magtorquers  - la.cross(pqr, H))
+
+        return np.concatenate((vel, accel, quatdot, pqrdot))
     
     def get_B_inertial(self, t, state):
         x, y, z = state[:3]
