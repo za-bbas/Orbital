@@ -64,9 +64,9 @@ psi0 = 0
 ptp0 = np.array([phi0, theta0, psi0])
 quat0 = eulerToQuat(ptp0)
 # initial angular velocity
-p0 = 0
-q0 = 0
-r0 = 0
+p0 = 0.01
+q0 = 0.05
+r0 = 0.033
 
 # State vector
 stateInitial = np.array([x0, y0, z0, 
@@ -84,39 +84,38 @@ solution = solve_ivp(
     fun=sat.dStateDT,
     t_span=tSpan,
     y0=stateInitial,
-    method='RK45',
-    rtol=1e-8,
-    atol=1e-10
+    method='Radau',
+    rtol=1e-6,
+    atol=1e-8
 )
 
 tout = solution.t
 stateout = solution.y.T
 
+print("Completed integration.")
+
 # get magnetic field data
 
-BxIout = []
-ByIout = []
-BzIout = []
+# BxIout = []
+# ByIout = []
+# BzIout = []
 
-for t, state in zip(tout, stateout):
-    Bxyz = sat.get_B_inertial(t, state)
-    BxIout.append(Bxyz[0])
-    ByIout.append(Bxyz[1])
-    BzIout.append(Bxyz[2])
+# for t, state in zip(tout, stateout):
+#     Bxyz = sat.get_B_inertial(t, state)
+#     BxIout.append(Bxyz[0])
+#     ByIout.append(Bxyz[1])
+#     BzIout.append(Bxyz[2])
 
 
 # Convert stateout from meters to kilometers
-stateout_km = stateout[0:6] / 1000
+xout = stateout[:, 0] / 1000  # x in km
+yout = stateout[:, 1] / 1000  # y in km
+zout = stateout[:, 2] / 1000  # z in km
 
-# Extract x, y, z components
-xout = stateout_km[:, 0]
-yout = stateout_km[:, 1]
-zout = stateout_km[:, 2]
-# ISSUE: it isnt converting every state into ptp
-# the stupid function is stupid
-# gotta figure out a solution
+# get attitude information
 quatout = stateout[:, 6:10]
-ptpout = quatToEuler(quatout)
+# Convert each quaternion to Euler angles for plotting
+ptpout = np.array([quatToEuler(q) for q in quatout])
 pqrout = stateout[:, 10:13]
 
 # Create a sphere to represent the Earth
@@ -148,31 +147,31 @@ ax.set_zlabel('Z (km)')
 plt.title("Satellite Orbit Around Earth")
 
 # plotting magentic field throughout orbit
-fig2, ax2 = plt.subplots(figsize=(10, 6))
-fig2.patch.set_facecolor('white')
+# fig2, ax2 = plt.subplots(figsize=(10, 6))
+# fig2.patch.set_facecolor('white')
 
-# Plot components and magnitude
-ax2.plot(tout / 60, BxIout, label='Bx (nT)', color = 'blue')
-ax2.plot(tout / 60, ByIout, label='By (nT)', color = 'green')
-ax2.plot(tout / 60, BzIout, label='Bz (nT)', color = 'red')
+# # Plot components and magnitude
+# ax2.plot(tout / 60, BxIout, label='Bx (nT)', color = 'blue')
+# ax2.plot(tout / 60, ByIout, label='By (nT)', color = 'green')
+# ax2.plot(tout / 60, BzIout, label='Bz (nT)', color = 'red')
 # ax2.plot(tout / 60, Bmag, label='|B| (nT)', linestyle='--', linewidth=2)
 
-# Formatting
-ax2.set_title("Magnetic Field Components vs Time")
-ax2.set_xlabel("Time (minutes)")
-ax2.set_ylabel("Magnetic Field (nT)")
-ax2.grid(True)
-ax2.legend()
+# # Formatting
+# ax2.set_title("Magnetic Field Components vs Time")
+# ax2.set_xlabel("Time (minutes)")
+# ax2.set_ylabel("Magnetic Field (nT)")
+# ax2.grid(True)
+# ax2.legend()
 
 fig3, ax3 = plt.subplots(figsize=(10,6))
 fig3.patch.set_facecolor('white')
-ax3.plot(tout, ptpout[0], label='phi',color='blue')
-ax3.plot(tout, ptpout[1], label='theta',color='blue')
-ax3.plot(tout, ptpout[2], label='psi',color='blue')
+ax3.plot(tout, ptpout[:,0], label='phi',color='blue')
+ax3.plot(tout, ptpout[:,1], label='theta',color='green')
+ax3.plot(tout, ptpout[:,2], label='psi',color='red')
 ax3.set_title("Euler Angles throughout an orbit")
 ax3.set_xlabel("Time")
 ax3.set_ylabel("something to do with angles")
 ax3.grid(True)
-ax3.legend
+ax3.legend()
 
 plt.show()

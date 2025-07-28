@@ -37,6 +37,7 @@ class Satellite:
         ])
 
         quatdot = 0.5 * PQRMAT @ quat
+        quat = quat / la.norm(quat)
 
         # gravity model
         r = np.array([x,y,z])
