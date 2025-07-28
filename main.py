@@ -65,8 +65,8 @@ ptp0 = np.array([phi0, theta0, psi0])
 quat0 = eulerToQuat(ptp0)
 # initial angular velocity
 p0 = 0.01
-q0 = 0.05
-r0 = 0.033
+q0 = 0
+r0 = 0
 
 # State vector
 stateInitial = np.array([x0, y0, z0, 
@@ -80,6 +80,7 @@ numberOfOrbits = 1
 tSpan = [0, period * numberOfOrbits]
 
 # Integrate equations of motion
+# Likley will have to change integrator now that we are rotating
 solution = solve_ivp(
     fun=sat.dStateDT,
     t_span=tSpan,
@@ -92,7 +93,7 @@ solution = solve_ivp(
 tout = solution.t
 stateout = solution.y.T
 
-print("Completed integration.")
+print("Completed simulation.")
 
 # get magnetic field data
 
@@ -170,8 +171,19 @@ ax3.plot(tout, ptpout[:,1], label='theta',color='green')
 ax3.plot(tout, ptpout[:,2], label='psi',color='red')
 ax3.set_title("Euler Angles throughout an orbit")
 ax3.set_xlabel("Time")
-ax3.set_ylabel("something to do with angles")
+ax3.set_ylabel("Angles (rad)")
 ax3.grid(True)
 ax3.legend()
+
+fig4, ax4 = plt.subplots(figsize=(10,6))
+fig4.patch.set_facecolor('white')
+ax4.plot(tout, pqrout[:,0], label='p',color='blue')
+ax4.plot(tout, pqrout[:,1], label='q',color='green')
+ax4.plot(tout, pqrout[:,2], label='r',color='red')
+ax4.set_title("Angular Velocities")
+ax4.set_xlabel("Time")
+ax4.set_ylabel("Anglular Velocity (rad/s)")
+ax4.grid(True)
+ax4.legend()
 
 plt.show()

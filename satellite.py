@@ -55,7 +55,6 @@ class Satellite:
         altitude = (rho - R)/1000           # kilometers
         Be, Bn, Bu = ppigrf.igrf(longitude, latitude, altitude, datetime(2000, 1, 1)) # East, North, Up (ENU) convention...
 
-        self.lastBField = np.array([Be, Bn, Bu])
         self.lastPosition = r
 
         # Translatioal Dynamics
@@ -70,6 +69,8 @@ class Satellite:
         # rotational dynamics
         H = self.I @ pqr
         pqrdot = self.invI @ (LMN_magtorquers  - la.cross(pqr, H))
+
+        self.lastBField = np.array([Be, Bn, Bu])
 
         return np.concatenate((vel, accel, quatdot, pqrdot))
     
