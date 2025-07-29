@@ -1,6 +1,5 @@
 from planet import *
 from satellite import Satellite
-from math import sqrt, pi, sin, cos
 import numpy as np
 import numpy.linalg as la
 from scipy.integrate import solve_ivp
@@ -9,6 +8,7 @@ import matplotlib.pyplot as plt
 # from matplotlib import cm
 # from datetime import datetime
 # import ppigrf
+import time # for benchmarking
 
 # the whole euler angles thing kind makes me blegh but its good enough for now
 def eulerToQuat(angles):
@@ -40,21 +40,23 @@ def quatToEuler(quat):
 
 # Simulation of a low earth satellite
 print('Simulation started.')
+startTime = time.time()
+
 
 sat = Satellite()
 
 # Initial conditions (translational)
-altitude = 600e3                                # meters
-inclination = 56 * pi / 180                     # radians
+altitude = 600e3                                   # meters
+inclination = 56 * np.pi / 180                     # radians
 
 x0 = R + altitude
 y0 = 0
 z0 = 0
-semimajor = la.norm(np.array([x0, y0, z0]))     # semimajor axis of orbit
-vCircular = sqrt(mu/semimajor)                  # tangential velocity
-xdot0 = 0                                       # velocity normal to earth so xdot = 0
-ydot0 = vCircular * cos(inclination)
-zdot0 = vCircular * sin(inclination)
+semimajor = la.norm(np.array([x0, y0, z0]))         # semimajor axis of orbit
+vCircular = np.sqrt(mu/semimajor)                   # tangential velocity
+xdot0 = 0                                           # velocity normal to earth so xdot = 0
+ydot0 = vCircular * np.cos(inclination)
+zdot0 = vCircular * np.sin(inclination)
 
 # Initial conditions (rotational)
 # initial attitude (could use some revamping)
@@ -64,9 +66,9 @@ psi0 = 0
 ptp0 = np.array([phi0, theta0, psi0])
 quat0 = eulerToQuat(ptp0)
 # initial angular velocity
-p0 = 0.01
-q0 = 0
-r0 = 0
+p0 = 0.08
+q0 = -0.02
+r0 = 0.015
 
 # State vector
 stateInitial = np.array([x0, y0, z0, 
@@ -75,7 +77,7 @@ stateInitial = np.array([x0, y0, z0,
                          p0, q0, r0])
 
 # time window
-period = 2 * pi * sqrt(semimajor**3 / mu)
+period = 2 * np.pi * np.sqrt(semimajor**3 / mu)
 numberOfOrbits = 1
 tSpan = [0, period * numberOfOrbits]
 
@@ -94,6 +96,9 @@ tout = solution.t
 stateout = solution.y.T
 
 print("Completed simulation.")
+endTime = time.time()
+elapsed = endTime - startTime
+print(f"Elapsed time: {elapsed:.3f} seconds")
 
 # get magnetic field data
 
@@ -106,6 +111,8 @@ print("Completed simulation.")
 #     BxIout.append(Bxyz[0])
 #     ByIout.append(Bxyz[1])
 #     BzIout.append(Bxyz[2])
+
+
 
 
 # Convert stateout from meters to kilometers

@@ -1,5 +1,4 @@
 from planet import *
-from math import acos, atan2, pi
 import numpy as np
 import numpy.linalg as la
 from datetime import datetime
@@ -50,8 +49,8 @@ class Satellite:
         phiE = 0
         thetaE = np.arccos(z / rho)         # colatitude (rad)
         psiE = np.arctan2(y, x)             # longitude (rad)
-        latitude = 90 - thetaE * 180 / pi   # degrees
-        longitude = psiE * 180 / pi         # degrees
+        latitude = 90 - thetaE * 180 / np.pi   # degrees
+        longitude = psiE * 180 / np.pi         # degrees
         altitude = (rho - R)/1000           # kilometers
         Be, Bn, Bu = ppigrf.igrf(longitude, latitude, altitude, datetime(2000, 1, 1)) # East, North, Up (ENU) convention...
 
@@ -63,6 +62,17 @@ class Satellite:
         # Magtorquer model
 
         # TODO: finish later
+        '''
+        MT model:
+        Generated torques are basically:
+        [L M N] = n*A*[Bx]i
+        where i is the current vector, which we can generate one of two ways:
+        traditional bdot: i = k [Bx]pqr
+        or the estimate: i = -k/|B'|^2 dB'/dt
+        note that B' is the b field in the body frame
+        effectively meaning that our torques will look something like:
+        [L M N] = k [Bx]^2 pqr
+        '''
         LMN_magtorquers = np.array([0,0,0])
 
 
@@ -81,8 +91,8 @@ class Satellite:
         psiE = np.arctan2(y, x)
         phiE = 0
 
-        latitude = 90 - thetaE * 180 / pi
-        longitude = psiE * 180 / pi
+        latitude = 90 - thetaE * 180 / np.pi
+        longitude = psiE * 180 / np.pi
         altitude = (rho - R) / 1000  # km
 
         # Get magnetic field in ENU
