@@ -71,7 +71,7 @@ q0 = -0.02
 r0 = 0.015
 
 # State vector
-stateInitial = np.array([x0, y0, z0, 
+state = np.array([x0, y0, z0, 
                          xdot0, ydot0, zdot0, 
                          quat0[0], quat0[1], quat0[2], quat0[3],
                          p0, q0, r0])
@@ -79,21 +79,33 @@ stateInitial = np.array([x0, y0, z0,
 # time window
 period = 2 * np.pi * np.sqrt(semimajor**3 / mu)
 numberOfOrbits = 1
-tSpan = [0, period * numberOfOrbits]
+tFinal = period * numberOfOrbits
+# Time to run simulation with different time steps:
+# timeStep = 10: 30-35 sec
+# timeStep =  5: 60-70 sec
+# timeStep =  1:  >300 sec
+timeStep = 5
+tOut = np.arange(0, tFinal + timeStep, timeStep)
+stateout = np.zeros((len(tOut), len(state)))
 
-# Integrate equations of motion
-# Likley will have to change integrator now that we are rotating
-solution = solve_ivp(
-    fun=sat.dStateDT,
-    t_span=tSpan,
-    y0=stateInitial,
-    method='Radau',
-    rtol=1e-6,
-    atol=1e-8
-)
+nextPrint = 1
+lastPrint = 0
 
-tout = solution.t
-stateout = solution.y.T
+for idx in range (len(tOut)):
+    stateout[idx] = state
+
+    if tOut[idx] > lastPrint:
+        print("Time is ", tOut[idx])
+        lastPrint += nextPrint
+
+    # RK 4 algorithm
+    k1 = sat.dStateDT(tOut[idx], state)
+    k2 = sat.dStateDT(tOut[idx] + timeStep/2, state + k1 * timeStep/2)
+    k3 = sat.dStateDT(tOut[idx] + timeStep/2, state + k2 * timeStep/2)
+    k4 = sat.dStateDT(tOut[idx] + timeStep  , state + k3 * timeStep)
+    k = (k1 + 2*k2 + 2*k3 + k4) / 6
+    state = state + k * timeStep
+
 
 print("Completed simulation.")
 endTime = time.time()
@@ -173,9 +185,9 @@ plt.title("Satellite Orbit Around Earth")
 
 fig3, ax3 = plt.subplots(figsize=(10,6))
 fig3.patch.set_facecolor('white')
-ax3.plot(tout, ptpout[:,0], label='phi',color='blue')
-ax3.plot(tout, ptpout[:,1], label='theta',color='green')
-ax3.plot(tout, ptpout[:,2], label='psi',color='red')
+ax3.plot(tOut, ptpout[:,0], label='phi',color='blue')
+ax3.plot(tOut, ptpout[:,1], label='theta',color='green')
+ax3.plot(tOut, ptpout[:,2], label='psi',color='red')
 ax3.set_title("Euler Angles throughout an orbit")
 ax3.set_xlabel("Time")
 ax3.set_ylabel("Angles (rad)")
@@ -184,9 +196,9 @@ ax3.legend()
 
 fig4, ax4 = plt.subplots(figsize=(10,6))
 fig4.patch.set_facecolor('white')
-ax4.plot(tout, pqrout[:,0], label='p',color='blue')
-ax4.plot(tout, pqrout[:,1], label='q',color='green')
-ax4.plot(tout, pqrout[:,2], label='r',color='red')
+ax4.plot(tOut, pqrout[:,0], label='p',color='blue')
+ax4.plot(tOut, pqrout[:,1], label='q',color='green')
+ax4.plot(tOut, pqrout[:,2], label='r',color='red')
 ax4.set_title("Angular Velocities")
 ax4.set_xlabel("Time")
 ax4.set_ylabel("Anglular Velocity (rad/s)")
