@@ -42,16 +42,6 @@ class Satellite:
         rhat = r / rho
         Fgrav = -(G * M * self.m / rho**2) * rhat
 
-        # Call the magnetic field model
-        # Convert cartesian x,y,x to lat, long, alt
-        phiE = 0
-        thetaE = np.arccos(z / rho)         # colatitude (rad)
-        psiE = np.arctan2(y, x)             # longitude (rad)
-        latitude = 90 - thetaE * 180 / np.pi   # degrees
-        longitude = psiE * 180 / np.pi         # degrees
-        altitude = (rho - R)/1000           # kilometers
-        Be, Bn, Bu = ppigrf.igrf(longitude, latitude, altitude, datetime(2000, 1, 1)) # East, North, Up (ENU) convention...
-
         self.lastPosition = r
 
         # Translatioal Dynamics
@@ -79,7 +69,7 @@ class Satellite:
         H = self.I @ pqr
         pqrdot = self.invI @ (LMN_magtorquers  - la.cross(pqr, H))
 
-        self.lastBField = np.array([Be, Bn, Bu])
+        self.lastBField = B_I
 
         return np.concatenate((vel, accel, quatdot, pqrdot))
     
