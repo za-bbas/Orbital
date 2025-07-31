@@ -7,7 +7,7 @@ Inertia = np.array([
     [  0,   0, 0.3]
 ])                                 # kg m^2
 # Satellite orbital parameters
-altitude = 600e3                   # kilometers
+altitude = 600e3                   # meters
 inclination = 56 * np.pi / 180     # radians
 numberOfOrbits = 1
 # Satellite rotational paramters
@@ -21,6 +21,7 @@ q0 = -0.02                         # rad/s
 r0 = 0.015                         # rad/s
 # Simulation Parameters
 timeStep = 5                       # seconds
+
 # Time to run simulation with diff time steps:
 # timeStep = 10: 30-35 sec
 # timeStep =  5: 60-70 sec
