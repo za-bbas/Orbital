@@ -29,8 +29,9 @@ def quatToEuler(quat):
     return np.array([phi, theta, psi])
 
 def crossSkew(v):
+    v = np.ravel(v)
     return np.array([
-        [0, -v[2], v[1]],
-        [v[2], 0, -v[0]],
-        [-v[1], v[0], 0]       
+        [0, -1*v[2], v[1]],
+        [v[2], 0, -1*v[0]],
+        [-1*v[1], v[0], 0]       
     ])

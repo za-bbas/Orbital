@@ -1,5 +1,6 @@
 from planet import *
 from params import mass, Inertia, timeStep
+from utils import crossSkew
 import numpy as np
 import numpy.linalg as la
 from datetime import datetime
@@ -32,8 +33,8 @@ class Satellite:
             [r,  q, -p,  0]
         ])
 
-        quatdot = 0.5 * PQRMAT @ quat
         quat = quat / la.norm(quat)
+        quatdot = 0.5 * PQRMAT @ quat
 
         # gravity model
         r = np.array([x,y,z])
@@ -65,12 +66,13 @@ class Satellite:
         [L M N] = n*A*[Bx]i
         where i is the current vector, which we can generate one of two ways:
         traditional bdot: i = k [Bx]pqr
-        or the estimate: i = -k/|B'|^2 dB'/dt
-        note that B' is the b field in the body frame
         effectively meaning that our torques will look something like:
-        [L M N] = k [Bx]^2 pqr
+        [L M N] = -k [Bx][Bx]T pqr
         '''
-        LMN_magtorquers = np.array([0,0,0])
+        B_I = self.get_B_inertial(t, state)
+        k = 5e6
+        b_cross = crossSkew(B_I)
+        LMN_magtorquers = -k * b_cross @ b_cross.T @ pqr
 
 
         # rotational dynamics
@@ -116,7 +118,7 @@ class Satellite:
         # The matrix is goes from NED (as opposed to the IGRF model output of ENU) to inertial
         B_ned = np.array([Bn, Be, -1 * Bu])
         B_xyz = TIB @ B_ned  # Now in ECI
-        return B_xyz
+        return B_xyz * 1e-9
 
     def getLastBField(self):
         return self.last_B_field
