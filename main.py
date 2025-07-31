@@ -1,4 +1,5 @@
 from planet import *
+from params import *
 from satellite import Satellite
 import numpy as np
 import numpy.linalg as la
@@ -46,9 +47,6 @@ startTime = time.time()
 sat = Satellite()
 
 # Initial conditions (translational)
-altitude = 600e3                                   # meters
-inclination = 56 * np.pi / 180                     # radians
-
 x0 = R + altitude
 y0 = 0
 z0 = 0
@@ -59,16 +57,8 @@ ydot0 = vCircular * np.cos(inclination)
 zdot0 = vCircular * np.sin(inclination)
 
 # Initial conditions (rotational)
-# initial attitude (could use some revamping)
-phi0 = 0
-theta0 = 0
-psi0 = 0
 ptp0 = np.array([phi0, theta0, psi0])
 quat0 = eulerToQuat(ptp0)
-# initial angular velocity
-p0 = 0.08
-q0 = -0.02
-r0 = 0.015
 
 # State vector
 state = np.array([x0, y0, z0, 
@@ -78,13 +68,7 @@ state = np.array([x0, y0, z0,
 
 # time window
 period = 2 * np.pi * np.sqrt(semimajor**3 / mu)
-numberOfOrbits = 1
 tFinal = period * numberOfOrbits
-# Time to run simulation with different time steps:
-# timeStep = 10: 30-35 sec
-# timeStep =  5: 60-70 sec
-# timeStep =  1:  >300 sec
-timeStep = 5
 tOut = np.arange(0, tFinal + timeStep, timeStep)
 stateout = np.zeros((len(tOut), len(state)))
 

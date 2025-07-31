@@ -1,18 +1,15 @@
 from planet import *
+from params import mass, Inertia, timeStep
 import numpy as np
 import numpy.linalg as la
 from datetime import datetime
 import ppigrf
 
 class Satellite:
-    def __init__(self, mass = 6):
+    def __init__(self):
         self.m = mass
         # Inertia in kg m^2
-        self.I = np.array([
-            [0.9, 0, 0],
-            [0, 0.9, 0],
-            [0, 0, 0.3]
-        ])
+        self.I = Inertia
         self.invI = la.inv(self.I)
         self.lastBField = None  # Store last B-field for access
         self.lastPosition = None
