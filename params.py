@@ -9,7 +9,7 @@ Inertia = np.array([
 # Satellite orbital parameters
 altitude = 400e3                   # meters
 inclination = 30 * np.pi / 180     # radians
-numberOfOrbits = 1
+numberOfOrbits = 5
 # Satellite rotational paramters
 # Attitude (euler angles):
 phi0 = 0                           # radians

@@ -4,12 +4,7 @@ from utils import *
 from satellite import Satellite
 import numpy as np
 import numpy.linalg as la
-from scipy.integrate import solve_ivp
 import matplotlib.pyplot as plt
-# from mpl_toolkits.mplot3d import Axes3D  # required for 3D projection
-# from matplotlib import cm
-# from datetime import datetime
-# import ppigrf
 import time # for benchmarking
 
 

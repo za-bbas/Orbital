@@ -60,8 +60,9 @@ class Satellite:
         [L M N] = -k [Bx][Bx]T pqr
         '''
         B_I = self.get_B_inertial(t, state)
-        k = 5e6
+        k = 2e5
         b_cross = crossSkew(B_I)
+        # i = k * b_cross @ pqr
         LMN_magtorquers = -k * b_cross @ b_cross.T @ pqr
 
 
