@@ -1,6 +1,6 @@
 from planet import *
 from params import mass, Inertia, timeStep
-from utils import crossSkew
+from utils import rotateVector
 import numpy as np
 import numpy.linalg as la
 from datetime import datetime
@@ -12,7 +12,7 @@ class Satellite:
         # Inertia in kg m^2
         self.I = Inertia
         self.invI = la.inv(self.I)
-        self.lastBField = None  # Store last B-field for access
+        self.lastBField = np.array([0.0, 0.0, 0.0])  # Store last B-field for access
         self.lastPosition = None
 
     def dStateDT(self, t, state):
@@ -37,9 +37,9 @@ class Satellite:
         quatdot = 0.5 * PQRMAT @ quat
 
         # gravity model
-        r = np.array([x,y,z])
-        rho = la.norm(r)
-        rhat = r / rho
+        pos = np.array([x,y,z])
+        rho = la.norm(pos)
+        rhat = pos / rho
         Fgrav = -(G * M * self.m / rho**2) * rhat
 
         self.lastPosition = r
@@ -59,18 +59,20 @@ class Satellite:
         effectively meaning that our torques will look something like:
         [L M N] = -k [Bx][Bx]T pqr
         '''
+        k = 9e4
         B_I = self.get_B_inertial(t, state)
-        k = 2e5
-        b_cross = crossSkew(B_I)
-        # i = k * b_cross @ pqr
-        LMN_magtorquers = -k * b_cross @ b_cross.T @ pqr
+        B_Body = rotateVector(np.array([quat[0], -quat[1], -quat[2], -quat[3]]), B_I).flatten()
+        B_Dot = (B_Body - self.lastBField) / timeStep
+        m_cmd = -k * B_Dot
+        m_cmd = np.clip(m_cmd, -0.2, 0.2)
+        LMN_magtorquers = np.cross(m_cmd, B_Body)
 
 
         # rotational dynamics
         H = self.I @ pqr
         pqrdot = self.invI @ (LMN_magtorquers  - la.cross(pqr, H))
 
-        self.lastBField = B_I
+        self.lastBField = B_Body
 
         return np.concatenate((vel, accel, quatdot, pqrdot))
     
