@@ -42,14 +42,13 @@ class Satellite:
         rhat = pos / rho
         Fgrav = -(G * M * self.m / rho**2) * rhat
 
-        self.lastPosition = r
+        self.lastPosition = pos
 
         # Translatioal Dynamics
         accel = Fgrav / self.m
 
         # Magtorquer model
 
-        # TODO: finish later
         '''
         MT model:
         Generated torques are basically:
@@ -59,7 +58,7 @@ class Satellite:
         effectively meaning that our torques will look something like:
         [L M N] = -k [Bx][Bx]T pqr
         '''
-        k = 9e4
+        k = 1e5
         B_I = self.get_B_inertial(t, state)
         B_Body = rotateVector(np.array([quat[0], -quat[1], -quat[2], -quat[3]]), B_I).flatten()
         B_Dot = (B_Body - self.lastBField) / timeStep

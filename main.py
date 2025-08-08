@@ -41,8 +41,6 @@ tFinal = period * numberOfOrbits
 tOut = np.arange(0, tFinal + timeStep, timeStep)
 stateout = np.zeros((len(tOut), len(state)))
 
-nextPrint = 1
-lastPrint = 0
 
 for idx in range (len(tOut)):
     stateout[idx] = state
@@ -74,7 +72,16 @@ quatout = stateout[:, 6:10]
 # Convert each quaternion to Euler angles for plotting
 ptpout = np.array([quatToEuler(q) for q in quatout])
 pqrout = stateout[:, 10:13]
+timeAtDetumble = 0
+for i in range(len(tOut)):
+    pqrComp = np.array([pqrout[i, 0], pqrout[i, 1], pqrout[i, 2]])
+    if la.norm(pqrComp) < (1 * np.pi / 180):
+        print("Done detumbling at time: ", tOut[i])
+        timeAtDetumble = tOut[i]
+        break
 
+omegaMax = np.array([np.pi/180 for _ in range(len(tOut))])
+omegaMag = la.norm(pqrout, axis=1)
 # Create a sphere to represent the Earth
 u, v = np.linspace(0, 2 * np.pi, 100), np.linspace(0, np.pi, 100)
 U, V = np.meshgrid(u, v)
@@ -104,16 +111,16 @@ ax.set_zlabel('Z (km)')
 plt.title("Satellite Orbit Around Earth")
 
 
-fig3, ax3 = plt.subplots(figsize=(10,6))
-fig3.patch.set_facecolor('white')
-ax3.plot(tOut, ptpout[:,0], label='phi',color='blue')
-ax3.plot(tOut, ptpout[:,1], label='theta',color='green')
-ax3.plot(tOut, ptpout[:,2], label='psi',color='red')
-ax3.set_title("Euler Angles throughout an orbit")
-ax3.set_xlabel("Time")
-ax3.set_ylabel("Angles (rad)")
-ax3.grid(True)
-ax3.legend()
+# fig3, ax3 = plt.subplots(figsize=(10,6))
+# fig3.patch.set_facecolor('white')
+# ax3.plot(tOut, ptpout[:,0], label='phi',color='blue')
+# ax3.plot(tOut, ptpout[:,1], label='theta',color='green')
+# ax3.plot(tOut, ptpout[:,2], label='psi',color='red')
+# ax3.set_title("Euler Angles throughout an orbit")
+# ax3.set_xlabel("Time")
+# ax3.set_ylabel("Angles (rad)")
+# ax3.grid(True)
+# ax3.legend()
 
 fig4, ax4 = plt.subplots(figsize=(10,6))
 fig4.patch.set_facecolor('white')
@@ -121,9 +128,21 @@ ax4.plot(tOut, pqrout[:,0], label='p',color='blue')
 ax4.plot(tOut, pqrout[:,1], label='q',color='green')
 ax4.plot(tOut, pqrout[:,2], label='r',color='red')
 ax4.set_title("Angular Velocities")
-ax4.set_xlabel("Time")
+ax4.set_xlabel("Time (s)")
 ax4.set_ylabel("Anglular Velocity (rad/s)")
 ax4.grid(True)
 ax4.legend()
+
+fig5, ax5 = plt.subplots(figsize=(10,6))
+fig5.patch.set_facecolor('white')
+ax5.plot(tOut, omegaMax, label='Detumbled Velocity (1 deg/s)',color='blue')
+ax5.plot(tOut, omegaMag, label='Magnitude of Satellite Omega', color='green')
+plt.axvline(x=24*60*60, color='r', linestyle='--', label='24 Hours')
+plt.axvline(x=timeAtDetumble, color='m', linestyle='--', label='Detumbled')
+ax5.set_title("Angular Velocity Over Time")
+ax5.set_xlabel("Time (s)")
+ax5.set_ylabel("Anglular Velocity (rad/s)")
+ax5.grid(True)
+ax5.legend()
 
 plt.show()
