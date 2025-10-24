@@ -37,6 +37,7 @@ state = np.array([x0, y0, z0,
 
 # time window
 period = 2 * np.pi * np.sqrt(semimajor**3 / mu)
+# print(period)
 tFinal = period * numberOfOrbits
 tOut = np.arange(0, tFinal + timeStep, timeStep)
 stateout = np.zeros((len(tOut), len(state)))
@@ -144,5 +145,42 @@ ax5.set_xlabel("Time (s)")
 ax5.set_ylabel("Anglular Velocity (rad/s)")
 ax5.grid(True)
 ax5.legend()
+
+
+# BxIout = []
+# ByIout = []
+# BzIout = []
+
+# for t, state in zip(tOut, stateout):
+#     Bxyz = sat.get_B_inertial(t, state)
+#     BxIout.append(Bxyz[0])
+#     ByIout.append(Bxyz[1])
+#     BzIout.append(Bxyz[2])
+
+# fig2, ax2 = plt.subplots(figsize=(10, 6))
+# fig2.patch.set_facecolor('white')
+
+# # Plot components and magnitude
+# ax2.plot(tOut / 60, BxIout, label='Bx (nT)')
+# ax2.plot(tOut / 60, ByIout, label='By (nT)')
+# ax2.plot(tOut / 60, BzIout, label='Bz (nT)')
+# # ax2.plot(tout / 60, Bmag, label='|B| (nT)', linestyle='--', linewidth=2)
+
+# # Formatting
+# ax2.set_title("Magnetic Field Components vs Time")
+# ax2.set_xlabel("Time (minutes)")
+# ax2.set_ylabel("Magnetic Field (nT)")
+# ax2.grid(True)
+# ax2.legend()
+# Bx = np.array(BxIout)
+# By = np.array(ByIout)
+# Bz = np.array(BzIout)
+# Bx_avg = np.mean(Bx)
+# By_avg = np.mean(By)
+# Bz_avg = np.mean(Bz)
+# B_avg_magnitude = np.linalg.norm([Bx_avg, By_avg, Bz_avg])
+# print(B_avg_magnitude)
+
+
 
 plt.show()
